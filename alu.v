@@ -13,4 +13,15 @@ module alu (
   output reg [4:0] flags // [0]: inexact, [1]: underflow, [2]: overflow, [3]: div_by_0, [4]: invalid
 );
 
+
+
 endmodule
+
+
+/*
+  references:
+
+  - IEEE 754: https://en.wikipedia.org/wiki/IEEE_754
+  - IEEE 754-1985: https://en.wikipedia.org/wiki/IEEE_754-1985
+  - CS341: https://web.archive.org/web/20070505021348/http://babbage.cs.qc.edu/courses/cs341/IEEE-754references.html
+*/
