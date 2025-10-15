@@ -28,6 +28,8 @@ module fdiv #(
   reg [frac - 1 : 0] frac_r;
   reg sign_r;
 
+  integer i;
+
   always @(*) begin
     // add implicit bit
     frac_a_r = {(exp_a != 0), frac_a};
@@ -44,7 +46,7 @@ module fdiv #(
     frac_norm = frac_div[frac + 3:0];
 
     if (!frac_norm[frac + 2]) begin
-      for (integer i = 0; i < frac + 2; i = i + 1) begin // shift left -> msb=1
+      for (i = 0; i < frac + 2; i = i + 1) begin // shift left -> msb=1
         if (!frac_norm[frac+2]) begin
           frac_norm = frac_norm << 1;
           exp_norm = exp_norm - 1;
