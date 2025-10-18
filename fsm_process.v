@@ -94,8 +94,8 @@ module fsm_process(
       case (state)
         LATCH_MODE: mode_fp <= n ? sw[15] : mode_fp;
         // FOR 16-BIT
-        LOAD_A16:    A16 <= n ? sw;
-        LOAD_B16:    B16 <= n ? sw;
+        LOAD_A16:    A16 <= n ? sw : A16;
+        LOAD_B16:    B16 <= n ? sw : B16;
         LOAD_CTRL16: begin
           if (n) begin
             op_code    <= sw[1:0];
