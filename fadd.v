@@ -7,7 +7,7 @@ module fadd #(
   input  [width-1:0] b,
   input              round_mode, // 1: nearest-even, 0: truncate
   output reg [width-1:0] r,
-  output reg [4:0] flags
+  output reg [4:0] flags // [0]: inexact, [1]: underflow, [2]: overflow, [3]: div_by_0, [4]: invalid
 );
   // flag bits- positions
   localparam INVALID_FLAG   = 4;

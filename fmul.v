@@ -5,11 +5,11 @@ module fmul #(
 ) (
   input [width - 1 : 0] a,
   input [width - 1 : 0] b,
-  input round_mode, // 1: nearest, 0: truncate
+  input                 round_mode, // 1: nearest, 0: truncate
   output reg [width- 1 : 0] r,
-  output reg [4 : 0] flags
+  output reg [4 : 0] flags // [0]: inexact, [1]: underflow, [2]: overflow, [3]: div_by_0, [4]: invalid
 );
-  // flag bits- positions
+  // flag bits - positions
   localparam INVALID_FLAG   = 4;
   localparam DIVZERO_FLAG   = 3; // no used
   localparam OVERFLOW_FLAG  = 2;
@@ -44,7 +44,7 @@ module fmul #(
 
   // temp vars
   reg signed [exp + 1 : 0]  exp_r;
-  reg [2 * frac + 2 : 0]    frac_mult;
+  reg [2 * frac + 1 : 0]    frac_mult;
   reg [frac : 0]            frac_a_r, frac_b_r;
   reg [frac - 1 : 0]        frac_r;
   reg                       sign_r;
@@ -54,9 +54,12 @@ module fmul #(
   reg guard, round_bit, sticky;
   reg case_1, case_2, rule;
 
+  integer i;
+  reg [2 * frac + 1 : 0] frac_mult_norm;
+
   always @(*) begin
     flags = 5'b00000;
-    r = 0;
+    r     = 0;
     // sign of result
     sign_r = sign_a ^ sign_b;
 
@@ -82,7 +85,7 @@ module fmul #(
     end
 
     else begin
-      // add 1 implicit bit
+      // add implicit bit
       frac_a_r = {(exp_a != 0), frac_a};
       frac_b_r = {(exp_b != 0), frac_b};
 
@@ -93,26 +96,33 @@ module fmul #(
       frac_mult = frac_a_r * frac_b_r;
 
       // normalize result
-      if (frac_mult[2 * frac + 1]) begin // overflow
+      if (frac_mult[2 * frac + 1]) begin // overflow -> shift right by 1
+        frac_mult = frac_mult >> 1;
         exp_r  = exp_r + 1;
-        unrounded = frac_mult[2 * frac + 1 : frac + 1];
-        guard     = frac_mult[frac];
-        round_bit = frac_mult[frac-1];
-        sticky    = |frac_mult[frac-2:0];
+      end else begin
+        frac_mult = frac_mult;
+        // Left-normalize if top bit at [2*frac] is 0 (can happen with subnormals)
+        if (!frac_mult[2 * frac]) begin
+          for (i = 2 * frac - 1; i >= 0; i = i - 1) begin
+            if (!frac_mult[2 * frac]) begin
+              frac_mult = frac_mult << 1;
+              exp_r = exp_r - 1;
+            end
+          end
+        end
       end
-      else begin
-        unrounded = frac_mult[2 * frac : frac];
-        guard     = frac_mult[frac - 1];
-        round_bit = frac_mult[frac - 2];
-        sticky    = |frac_mult[frac - 3 : 0];
-      end
+
+      unrounded = frac_mult[2 * frac : frac]; // width = frac+1
+      guard     = frac_mult[frac];
+      round_bit = frac_mult[frac - 1];
+      sticky    = |frac_mult[frac - 2 : 0];
 
       if (guard || round_bit || sticky) flags[INEXACT_FLAG] = 1'b1;
 
       // round
       if (round_mode) begin
         case_1 = guard & (round_bit | sticky);
-        case_2 = guard & ~round_bit & ~sticky & unrounded[0];
+        case_2 = ~guard & (round_bit & sticky);
         rule   = case_1 | case_2;
 
         if (rule) begin
@@ -123,9 +133,9 @@ module fmul #(
           end
           else frac_r = rounded[frac-1:0];
         end
-        else frac_r = unrounded[frac-1:0];
+        else frac_r = unrounded[frac-1:0]; // round down
       end
-      else frac_r = unrounded[frac-1:0];
+      else frac_r = unrounded[frac-1:0]; // truncate
 
       // overflow/underflow
       if (exp_r >= (1 << exp) - 1) begin

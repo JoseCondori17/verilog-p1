@@ -8,19 +8,21 @@ module alu #(
   input [1:0] op_code, // 00: add, 01: sub, 10: mul, 11: div
   input round_mode,
 
-  output reg [width : 0] result,
+  output reg [width - 1 : 0] result,
   output reg [4:0] flags // [0]: inexact, [1]: underflow, [2]: overflow, [3]: div_by_0, [4]: invalid
 );
-  reg [width - 1] r_sum, r_sub, r_mul, r_div;
-  reg [4 : 0] f_sum, f_sub, f_mul, f_div;
+  wire [width - 1 : 0] r_sum, r_sub, r_mul, r_div;
+  wire [4 : 0] f_sum, f_sub, f_mul, f_div;
+
+  wire [width-1:0] neg_b = {~op_b[width-1], op_b[width-2:0]};
 
   fadd #(exp, frac) add(op_a, op_b, round_mode, r_sum, f_sum);
-  fadd #(exp, frac) sub(op_a, ~op_b, round_mode, r_sub, f_sub);
+  fadd #(exp, frac) sub(op_a, neg_b, round_mode, r_sub, f_sub);
   fmul #(exp, frac) mul(op_a, op_b, round_mode, r_mul, f_mul);
-  fdiv #(exp, frac) div(op_a, op_b, round_mode, r_div, f_div);
+  //fdiv #(exp, frac) div(op_a, op_b, round_mode, r_div, f_div);
 
   always @(*) begin
-    case (op)
+    case (op_code)
       2'b00: begin
         result = r_sum;
         flags = f_sum;
