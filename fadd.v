@@ -74,7 +74,7 @@ module fadd #(
       else r = is_a_inf ? a : b;
     end
 
-    // case Normal/Denormal/Zero
+    // case normal/denormal/zero
     else begin
       // expand fractions: add implicit bit and 2 guard bits
       frac_a_r = {(exp_a != 0), frac_a, 2'b00};
