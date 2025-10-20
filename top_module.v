@@ -38,6 +38,7 @@ module top_module(
   btn_sync u_btn_sync(
     .clk(clk_w),
     .reset(reset),
+    .btnC(btnC),
     .btn_rise(btn_rise)
   );
   
@@ -45,11 +46,11 @@ module top_module(
   // ALU 16-BIT AND 32-BIT
   // @description: floating point ALU
   //##################################################
-  reg mode_fp;
-  reg [15:0]  A16, B16; // 16-bit inputs
-  reg [31:0]  A32, B32; // 32-bit inputs
-  reg [1:0]   op_code;  // operation code
-  reg         round_mode; // 1: round to nearest even, 0: truncate
+  wire mode_fp;
+  wire [15:0]  A16, B16; // 16-bit inputs
+  wire [31:0]  A32, B32; // 32-bit inputs
+  wire [1:0]   op_code;  // operation code
+  wire         round_mode; // 1: round to nearest even, 0: truncate
 
   wire [15:0] r16; // 16-bit result
   wire [4:0]  f16; // 16-bit flags
@@ -79,7 +80,7 @@ module top_module(
   // FSM CONTROLLER
   // @description: finite state machine controller
   //##################################################
-  reg [15:0] shown16; // to 7-seg display
+  wire [15:0] shown16; // to 7-seg display
   fsm_process U_FSM(
     .clk(clk),
     .clk_w(clk_w),
@@ -105,7 +106,7 @@ module top_module(
   // 7-SEG DISPLAY DRIVER
   // @description: drive 7-seg display
   //##################################################
-  seg7decimal U_SEG7(
+  hex4_7seg U_SEG7(
     .clk(clk),
     .val(shown16),
     .seg(seg),
@@ -117,6 +118,7 @@ endmodule
 module btn_sync(
   input clk,
   input reset,
+  input btnC,
   output btn_rise
 );
   reg btn_ff1, btn_ff2, btn_prev;

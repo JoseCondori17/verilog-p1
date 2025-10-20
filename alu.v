@@ -19,7 +19,7 @@ module alu #(
   fadd #(exp, frac) add(op_a, op_b, round_mode, r_sum, f_sum);
   fadd #(exp, frac) sub(op_a, neg_b, round_mode, r_sub, f_sub);
   fmul #(exp, frac) mul(op_a, op_b, round_mode, r_mul, f_mul);
-  //fdiv #(exp, frac) div(op_a, op_b, round_mode, r_div, f_div);
+  fdiv #(exp, frac) div(op_a, op_b, round_mode, r_div, f_div);
 
   always @(*) begin
     case (op_code)
